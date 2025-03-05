@@ -7,14 +7,52 @@ def create_artistic_qr(url, background_file, output_filename, scale=6):
     try:
         qr = segno.make(url, error='h')
         
-        qr.to_artistic(
-            background=background_file,
-            target=output_filename,
-            scale=scale,
-            dark='black',
-            light=None
-        )
+        # Save QR code as PNG with transparency
+        temp_qr = "temp_qr.png"
+        qr.save(temp_qr, scale=scale, dark="black", light=None)
+        
+        # Open QR code and background GIF
+        qr_image = Image.open(temp_qr)
+        bg_gif = Image.open(background_file)
+        
+        # Get all frames from GIF
+        frames = []
+        try:
+            while True:
+                # Copy current frame
+                current = bg_gif.copy()
+                
+                # Convert frame to RGBA if needed
+                if current.mode != 'RGBA':
+                    current = current.convert('RGBA')
+                
+                # Resize QR to match frame size
+                resized_qr = qr_image.resize(current.size)
+                
+                # Combine frame with QR
+                current.paste(resized_qr, (0, 0), resized_qr)
+                frames.append(current)
+                
+                # Move to next frame
+                bg_gif.seek(bg_gif.tell() + 1)
+        except EOFError:
+            pass  # End of frames
+        
+        # Save animated result
+        if frames:
+            frames[0].save(
+                output_filename,
+                save_all=True,
+                append_images=frames[1:],
+                duration=bg_gif.info.get('duration', 100),
+                loop=0,
+                optimize=False
+            )
+        
+        # Cleanup
+        os.remove(temp_qr)
         return True
+        
     except Exception as e:
         st.error(f"Error creating QR code: {e}")
         return False
