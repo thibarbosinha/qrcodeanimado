@@ -5,34 +5,16 @@ from PIL import Image
 
 def create_artistic_qr(url, background_file, output_filename, scale=6):
     try:
-        # Create QR code
-        qr = segno.make_qr(url)
+        qr = segno.make(url, error='h')
         
-        # Create temporary PNG QR code
-        temp_qr = "temp_qr.png"
-        qr.save(temp_qr, scale=scale, dark="black", light=None)
-        
-        # Process images with PIL
-        qr_image = Image.open(temp_qr)
-        bg_image = Image.open(background_file)
-        
-        # Convert to RGBA if needed
-        if bg_image.mode != 'RGBA':
-            bg_image = bg_image.convert('RGBA')
-        if qr_image.mode != 'RGBA':
-            qr_image = qr_image.convert('RGBA')
-        
-        # Resize QR to match background
-        qr_image = qr_image.resize(bg_image.size)
-        
-        # Combine images
-        result = Image.alpha_composite(bg_image, qr_image)
-        result.save(output_filename)
-        
-        # Cleanup
-        os.remove(temp_qr)
+        qr.to_artistic(
+            background=background_file,
+            target=output_filename,
+            scale=scale,
+            dark='black',
+            light=None
+        )
         return True
-        
     except Exception as e:
         st.error(f"Error creating QR code: {e}")
         return False
