@@ -1,3 +1,4 @@
 streamlit
 segno
 Pillow
+qrcode-artistic
